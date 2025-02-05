@@ -1,16 +1,27 @@
 from flask import Flask, request, jsonify
 import requests
+import os
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv()
 
 app = Flask(__name__)
 
-# Configuración de Telegram
-TELEGRAM_BOT_TOKEN = '7250099290:AAES0s4Ixl6XjMRgPKoh4IjpsAocIFBScBQ'  # Reemplaza con tu token de bot
-TELEGRAM_CHAT_ID = '7115083048'      # Reemplaza con tu chat ID
+# Obtener variables de entorno
+TELEGRAM_BOT_TOKEN = os.getenv('7250099290:AAES0s4Ixl6XjMRgPKoh4IjpsAocIFBScBQ')
+TELEGRAM_CHAT_ID = os.getenv('7115083048')
 
 # Ruta para manejar solicitudes GET (verificación de monday.com)
 @app.route('/webhook', methods=['GET'])
 def verify_webhook():
-    return "Webhook configurado correctamente.", 200
+    # Obtén el parámetro "challenge" de la solicitud
+    challenge = request.args.get('challenge')
+    if challenge:
+        # Devuelve el valor del challenge para verificar la URL
+        return challenge, 200
+    else:
+        return "Falta el parámetro 'challenge'.", 400
 
 # Ruta para manejar solicitudes POST (webhook de monday.com)
 @app.route('/webhook', methods=['POST'])
