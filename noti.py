@@ -4,27 +4,41 @@ import requests
 app = Flask(__name__)
 
 # Configuración de Telegram
-TELEGRAM_BOT_TOKEN = '7250099290:AAES0s4Ixl6XjMRgPKoh4IjpsAocIFBScBQ'
-TELEGRAM_CHAT_ID = '7115083048'
+TELEGRAM_BOT_TOKEN = '7250099290:AAES0s4Ixl6XjMRgPKoh4IjpsAocIFBScBQ'  # Reemplaza con tu token de bot
+TELEGRAM_CHAT_ID = '7115083048'      # Reemplaza con tu chat ID
 
-# Ruta para manejar el webhook de monday.com
+# Ruta para manejar solicitudes GET (verificación de monday.com)
+@app.route('/webhook', methods=['GET'])
+def verify_webhook():
+    return "Webhook configurado correctamente.", 200
+
+# Ruta para manejar solicitudes POST (webhook de monday.com)
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    data = request.json
-    print("Datos recibidos del webhook:", data)
+    try:
+        # Obtén los datos JSON de la solicitud
+        data = request.json
+        if not data:
+            return jsonify({"status": "error", "message": "No se recibieron datos JSON"}), 400
 
-    # Verifica si el evento es un cambio en el estado
-    if data.get('event', {}).get('type') == 'change_column_value':
-        item_id = data['event']['pulseId']
-        new_status = data['event']['value']['label']  # Asume que el estado es un label
+        print("Datos recibidos del webhook:", data)
 
-        # Mensaje para Telegram
-        message = f"El estado del elemento {item_id} ha cambiado a: {new_status}"
+        # Verifica si el evento es un cambio en el estado
+        if data.get('event', {}).get('type') == 'change_column_value':
+            item_id = data['event']['pulseId']
+            new_status = data['event']['value']['label']  # Asume que el estado es un label
 
-        # Envía la notificación a Telegram
-        send_telegram_message(message)
+            # Mensaje para Telegram
+            message = f"El estado del elemento {item_id} ha cambiado a: {new_status}"
+            print(message)  # Imprime el mensaje en los logs
 
-    return jsonify({"status": "success"}), 200
+            # Envía la notificación a Telegram
+            send_telegram_message(message)
+
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        print("Error en el webhook:", str(e))
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # Función para enviar mensajes a Telegram
 def send_telegram_message(message):
