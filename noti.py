@@ -12,17 +12,6 @@ app = Flask(__name__)
 TELEGRAM_BOT_TOKEN = os.getenv('7250099290:AAES0s4Ixl6XjMRgPKoh4IjpsAocIFBScBQ')
 TELEGRAM_CHAT_ID = os.getenv('7115083048')
 
-# Ruta para manejar solicitudes GET (verificación de monday.com)
-@app.route('/webhook', methods=['GET'])
-def verify_webhook():
-    # Obtén el parámetro "challenge" de la solicitud
-    challenge = request.args.get('challenge')
-    if challenge:
-        # Devuelve el valor del challenge para verificar la URL
-        return challenge, 200
-    else:
-        return "Falta el parámetro 'challenge'.", 400
-
 # Ruta para manejar solicitudes POST (webhook de monday.com)
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -33,6 +22,11 @@ def webhook():
             return jsonify({"status": "error", "message": "No se recibieron datos JSON"}), 400
 
         print("Datos recibidos del webhook:", data)
+
+        # Verifica si la solicitud contiene un "challenge"
+        if 'challenge' in data:
+            # Devuelve el valor del challenge para verificar la URL
+            return jsonify({"challenge": data['challenge']}), 200
 
         # Verifica si el evento es un cambio en el estado
         if data.get('event', {}).get('type') == 'change_column_value':
